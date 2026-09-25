@@ -86,7 +86,7 @@ export function ZipFill({
       <label className="field">
         Colonia o localidad
         {colonias.length > 1 ? (
-          <select name="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} required>
+          <select name="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)}>
             <option value="">Selecciona tu colonia</option>
             {colonias.map((name) => (
               <option key={name} value={name}>

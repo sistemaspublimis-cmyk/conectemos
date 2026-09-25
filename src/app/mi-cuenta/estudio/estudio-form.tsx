@@ -168,6 +168,10 @@ export function EstudioForm({ initial, submitted = false }: { initial: Study; su
       if (!val("fullName") || !val("birthDate") || !val("address") || !val("city")) {
         return "Completa nombre, fecha de nacimiento, domicilio y ciudad para continuar.";
       }
+      const colonia = form.elements.namedItem("neighborhood");
+      if (colonia instanceof HTMLSelectElement && !val("neighborhood")) {
+        return "Elige tu colonia o localidad para continuar.";
+      }
     }
     if (index === 1) {
       if (!val("employmentType") || !val("company") || readNumber(form, "monthlyIncome") <= 0) {
@@ -184,6 +188,7 @@ export function EstudioForm({ initial, submitted = false }: { initial: Study; su
     }
     if (index === 3) {
       if (!(amount > 0) || !termMonths) return "Selecciona un monto y un plazo.";
+      if (!val("purpose")) return "Indica para qué quieres el crédito.";
     }
     if (index === 4) {
       if (!val("knowsBureau")) return "Indica si conoces tu estatus de buró de crédito.";
@@ -255,7 +260,7 @@ export function EstudioForm({ initial, submitted = false }: { initial: Study; su
   }
 
   return (
-    <form className="grid gap-5" onSubmit={onContinue}>
+    <form className="grid gap-5" noValidate onSubmit={onContinue}>
       <div className="grid lg:grid-cols-[220px_minmax(0,1fr)] gap-5">
         <aside className="card p-4 h-fit">
           <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--muted)] mb-3">Secciones</p>
@@ -502,7 +507,7 @@ function PurposeField({ defaultValue }: { defaultValue: string }) {
     <div className="card p-5 grid gap-3">
       <label className="field">
         ¿Para qué lo quieres?
-        <select name="purposeSelect" value={purpose} onChange={(e) => setPurpose(e.target.value)} required>
+        <select name="purposeSelect" value={purpose} onChange={(e) => setPurpose(e.target.value)}>
           <option value="">Seleccionar</option>
           {PURPOSE_OPTIONS.map((opt) => (
             <option key={opt}>{opt}</option>
