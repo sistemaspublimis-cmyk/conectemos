@@ -1,0 +1,546 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  ADVISOR
+  CLIENT
+}
+
+enum UserStatus {
+  PENDING_ACTIVATION
+  ACTIVE
+  DISABLED
+  BLOCKED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  STUDY_PENDING
+  STUDY_COMPLETED
+  DOCUMENTS_PENDING
+  IN_REVIEW
+  INFO_REQUESTED
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  IDENTIFICATION
+  ADDRESS_PROOF
+  INCOME_PROOF
+  BANK_STATEMENT
+  CURP
+  TAX_STATUS
+  ADDITIONAL
+}
+
+enum DocumentStatus {
+  PENDING
+  RECEIVED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  NEEDS_CORRECTION
+}
+
+enum DeliveryStatus {
+  PREPARED
+  PENDING
+  SENT
+  ERROR
+}
+
+enum DisbursementStatus {
+  PENDING
+  PREPARED
+  REGISTERED
+  CANCELLED
+}
+
+enum ContractStatus {
+  DRAFT
+  PREPARED
+  PENDING_SIGNATURE
+}
+
+enum OfferStatus {
+  PENDING
+  PREPARED
+}
+
+model User {
+  id              String     @id @default(cuid())
+  email           String     @unique
+  passwordHash    String
+  role            Role       @default(CLIENT)
+  status          UserStatus @default(ACTIVE)
+  firstName       String
+  lastName        String
+  phone           String?
+  whatsapp        String?
+  isDemo          Boolean    @default(false)
+  welcomeSeenAt   DateTime?
+  approvalSeenAt  DateTime?
+  lastActivityAt  DateTime?
+  lastLoginAt     DateTime?
+  lastIp          String?
+  lastUserAgent   String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  client          Client?
+  sessions        Session[]
+  resetTokens     PasswordResetToken[]
+  auditLogs       AuditLog[]           @relation("AuditActor")
+  reviewedDocs    ClientDocument[]     @relation("DocReviewer")
+  reviewedApps    Application[]        @relation("AppReviewer")
+  amountChanges   AmountHistory[]
+  generatedDocs   GeneratedDocument[]  @relation("GeneratedBy")
+  disbursements   Disbursement[]       @relation("DisbursementRegistrar")
+}
+
+model Session {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenJti    String    @unique
+  ip          String?
+  userAgent   String?
+  currentPath String?
+  createdAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Sequence {
+  key   String @id
+  value Int
+}
+
+model Client {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folio             String   @unique
+  product           String   @default("Crédito Personal")
+  requestedAmount   Decimal  @default(0)
+  authorizedAmount  Decimal  @default(0)
+  displayedAmount   Decimal  @default(0)
+  disbursedAmount   Decimal  @default(0)
+  termMonths        Int?
+  purpose           String?
+  isDemo            Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  application       Application?
+  study             SocioEconomicStudy?
+  documents         ClientDocument[]
+  notifications     Notification[]
+  amountHistory     AmountHistory[]
+  bankDetails       BankDetails?
+  offer             Offer?
+  contract          Contract?
+  disbursement      Disbursement?
+  emails            EmailMessage[]
+  conversations     Conversation[]
+  generatedDocs     GeneratedDocument[]
+  auditLogs         AuditLog[]
+  products          ClientProduct[]
+  digitalAccount    DigitalAccount?
+  savingsFund       SavingsFund?
+}
+
+model Application {
+  id           String            @id @default(cuid())
+  clientId     String            @unique
+  client       Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  folio        String
+  product      String            @default("Crédito Personal")
+  amount       Decimal           @default(0)
+  termMonths   Int?
+  purpose      String?
+  status       ApplicationStatus @default(STUDY_PENDING)
+  infoRequest  String?
+  rejectReason String?
+  reviewedById String?
+  reviewedBy   User?             @relation("AppReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  reviewStartedAt      DateTime?
+  documentsSubmittedAt DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model SocioEconomicStudy {
+  id               String    @id @default(cuid())
+  clientId         String    @unique
+  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  submitted        Boolean   @default(false)
+  submittedAt      DateTime?
+
+  fullName         String?
+  birthDate        String?
+  maritalStatus    String?
+  dependents       Int?
+  address          String?
+  neighborhood     String?
+  city             String?
+  state            String?
+  zip              String?
+  housingType      String?
+
+  employmentType   String?
+  company          String?
+  position         String?
+  seniority        String?
+  monthlyIncome    Decimal?
+  otherIncome      Decimal?
+
+  housingExpense   Decimal?
+  foodExpense      Decimal?
+  utilitiesExpense Decimal?
+  transportExpense Decimal?
+  creditExpense    Decimal?
+  otherExpense     Decimal?
+
+  monthlyExpenses  Decimal?
+  currentCredits   String?
+  autoCredits      String?
+  knowsBureau      String?
+  bureauStatus     String?
+  debts            String?
+  references       String?
+
+  requestedAmount  Decimal?
+  termMonths       Int?
+  purpose          String?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model ClientDocument {
+  id           String         @id @default(cuid())
+  clientId     String
+  client       Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type         DocumentType
+  originalName String
+  storedName   String
+  mimeType     String
+  size         Int
+  status       DocumentStatus @default(RECEIVED)
+  comments     String?
+  reviewedById String?
+  reviewedBy   User?          @relation("DocReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([clientId])
+}
+
+model AmountHistory {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  previous     Decimal
+  next         Decimal
+  changedById  String
+  changedBy    User     @relation(fields: [changedById], references: [id])
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@index([clientId])
+}
+
+model Notification {
+  id              String         @id @default(cuid())
+  clientId        String
+  client          Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type            String
+  title           String
+  message         String
+  channelPanel    Boolean        @default(true)
+  channelEmail    Boolean        @default(false)
+  channelWhatsapp Boolean        @default(false)
+  emailStatus     DeliveryStatus @default(PREPARED)
+  whatsappStatus  DeliveryStatus @default(PREPARED)
+  readAt          DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@index([clientId])
+}
+
+model EmailMessage {
+  id        String         @id @default(cuid())
+  clientId  String?
+  client    Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  eventType String
+  toEmail   String
+  subject   String
+  body      String
+  status    DeliveryStatus @default(PREPARED)
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime       @default(now())
+
+  @@index([clientId])
+}
+
+model Conversation {
+  id           String            @id @default(cuid())
+  clientId     String?
+  client       Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  phone        String
+  lastMessage  String?
+  lastAt       DateTime?
+  createdAt    DateTime          @default(now())
+  messages     WhatsAppMessage[]
+
+  @@index([phone])
+}
+
+model WhatsAppMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction      String
+  body           String
+  status         DeliveryStatus @default(PREPARED)
+  waMessageId    String?
+  createdAt      DateTime       @default(now())
+}
+
+model Offer {
+  id         String      @id @default(cuid())
+  clientId   String      @unique
+  client     Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amount     Decimal     @default(0)
+  termMonths Int?
+  rate       String?
+  notes      String?
+  status     OfferStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Contract {
+  id                String         @id @default(cuid())
+  clientId          String         @unique
+  client            Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status            ContractStatus @default(DRAFT)
+  body              String?
+  preparedAt        DateTime?
+  signatureDraftAt  DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model BankDetails {
+  id            String   @id @default(cuid())
+  clientId      String   @unique
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  holder        String?
+  bank          String?
+  clabe         String?
+  accountNumber String?
+  branch        String?
+  accountType   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Disbursement {
+  id             String             @id @default(cuid())
+  clientId       String             @unique
+  client         Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amount         Decimal            @default(0)
+  status         DisbursementStatus @default(PENDING)
+  note           String?
+  registeredById String?
+  registeredBy   User?              @relation("DisbursementRegistrar", fields: [registeredById], references: [id])
+  registeredAt   DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model GeneratedDocument {
+  id          String         @id @default(cuid())
+  clientId    String
+  client      Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type        String
+  fileName    String
+  storedName  String
+  status      DeliveryStatus @default(PREPARED)
+  generatedById String?
+  generatedBy User?          @relation("GeneratedBy", fields: [generatedById], references: [id])
+  createdAt   DateTime       @default(now())
+
+  @@index([clientId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  action    String
+  ip        String?
+  userAgent String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([clientId])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String   @default("")
+  body      String
+  cta       String
+  href      String
+  imageUrl  String
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ProductKind {
+  BASIC_ACCOUNT
+  DIGITAL_ACCOUNT
+  PERSONAL_CREDIT
+  PAYROLL_CREDIT
+  SME_CREDIT
+  AUTO_CREDIT
+  LEASING
+  FACTORING
+  CREDIT_CARD
+  DEBIT_CARD
+  BUSINESS_ACCOUNT
+  SAVINGS
+  INVESTMENT
+}
+
+enum ClientProductStatus {
+  AVAILABLE
+  CONTRACTED
+  PENDING
+  BLOCKED
+  UNAVAILABLE
+  CANCELLED
+}
+
+model Product {
+  id                    String   @id @default(cuid())
+  slug                  String   @unique
+  name                  String
+  kind                  ProductKind
+  summary               String
+  description           String
+  benefits              String   @default("")
+  requirements          String   @default("")
+  imageUrl              String?
+  requiresBasicAccount  Boolean  @default(true)
+  active                Boolean  @default(true)
+  sortOrder             Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  clientProducts        ClientProduct[]
+}
+
+model ClientProduct {
+  id           String              @id @default(cuid())
+  clientId     String
+  client       Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  status       ClientProductStatus @default(AVAILABLE)
+  amount       Decimal             @default(0)
+  blocked      Boolean             @default(false)
+  available    Boolean             @default(true)
+  tapMessage   String?
+  contractedAt DateTime?
+  cancelledAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  events       ClientProductEvent[]
+
+  @@unique([clientId, productId])
+  @@index([clientId])
+}
+
+model ClientProductEvent {
+  id              String        @id @default(cuid())
+  clientProductId String
+  clientProduct   ClientProduct @relation(fields: [clientProductId], references: [id], onDelete: Cascade)
+  action          String
+  note            String?
+  actorId         String?
+  createdAt       DateTime      @default(now())
+
+  @@index([clientProductId])
+}
+
+model DigitalAccount {
+  id            String   @id @default(cuid())
+  clientId      String   @unique
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  accountNumber String
+  clabe         String?
+  status        String   @default("TEMPORARY")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SavingsFund {
+  id               String   @id @default(cuid())
+  clientId         String   @unique
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  reference        String
+  amount           Decimal  @default(0)
+  status           String   @default("PENDING")
+  receiptName      String?
+  receiptStored    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

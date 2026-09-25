@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: alux-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: alux
+      POSTGRES_PASSWORD: alux
+      POSTGRES_DB: alux
+    ports:
+      - "5432:5432"
+    volumes:
+      - alux_pg:/var/lib/postgresql/data
+
+volumes:
+  alux_pg:

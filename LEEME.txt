@@ -1,0 +1,57 @@
+Conectemos Junto Contigo — plataforma de solicitudes
+====================================================
+
+UN SOLO PASO
+------------
+Mac:      doble clic en  Iniciar Conectemos.command
+          (o INICIAR.command)
+Windows:  doble clic en  INICIAR.bat
+Linux:    ./iniciar.sh
+
+La primera vez instala lo que falte (Node.js si no está,
+librerías, base de datos) y abre Chrome.
+A partir de la segunda vez, solo enciende y abre.
+
+Si Mac dice que no se puede abrir:
+  clic derecho en Iniciar Conectemos.command → Abrir → Abrir.
+
+Deja la ventana negra/terminal abierta mientras uses Conectemos.
+
+
+CUANDO ABRA EL NAVEGADOR
+------------------------
+Sitio:          http://localhost:3110
+Panel admin:    http://localhost:3110/admin
+Portal cliente: http://localhost:3110/mi-cuenta
+
+Administrador
+  correo       admin@conectemos.mx
+  contraseña   Conectemos2026!
+
+Cliente
+  correo       maria.demo@conectemos.mx
+  contraseña   DemoCjc2026!
+
+Gerencia (también entra al panel)
+  correo       gerencia@conectemos.mx
+  contraseña   Conectemos2026!
+
+
+CONTACTO
+--------
+contacto@conectemos.mx
+Razón social: Conectemos Junto Contigo, S.A.P.I. de C.V., SOFOM, E.N.R.
+
+
+REQUISITOS
+----------
+Internet la primera vez.
+En Mac/Linux no hace falta instalar nada antes:
+si no hay Node.js, el comando se descarga una copia.
+En Windows, si no hay Node.js, se abre https://nodejs.org
+(instala LTS y vuelve a dar doble clic en INICIAR.bat).
+
+
+APAGAR
+------
+Cierra la ventana del comando, o pulsa Ctrl+C.
