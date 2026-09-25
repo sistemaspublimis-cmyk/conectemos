@@ -75,7 +75,7 @@ export function AdminWelcome({
         <div key={current.q} className="admin-onb-stage">
           <h1 id="admin-welcome-title">{step === 0 ? `Hola, ${first}` : current.title}</h1>
           {step === 0 ? <h2 className="admin-onb-sub">{current.title}</h2> : null}
-          <p>{current.body}</p>
+          {"body" in current && current.body ? <p>{current.body}</p> : null}
           {"cards" in current && current.cards ? (
             <div className="admin-onb-cards">
               {current.cards.map((card) => (

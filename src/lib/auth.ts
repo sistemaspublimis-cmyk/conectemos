@@ -36,7 +36,7 @@ export async function createSession(user: {
   status: UserStatus;
   firstName: string;
   lastName: string;
-}, meta?: { ip?: string; userAgent?: string }) {
+}, meta?: { ip?: string | null; userAgent?: string | null }) {
   const jti = crypto.randomUUID();
   const token = await new SignJWT({
     id: user.id,
